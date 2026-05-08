@@ -2,9 +2,12 @@
 
 A modern web application that uses multiple machine learning models to detect fake news articles with high accuracy.
 
+🌐 **Live Demo**: [https://factshield-three.vercel.app](https://factshield-three.vercel.app)
+
 ![Fake News Detection](https://img.shields.io/badge/Fake%20News%20Detection-AI%20Powered-blue)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-green)
 ![Flask](https://img.shields.io/badge/Flask-3.1%2B-lightgrey)
+![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-000000)
 
 ## 🛡️ Features
 
@@ -67,18 +70,24 @@ Our weighted consensus mechanism ensures that while we benefit from diverse mode
 ## 📁 Project Structure
 
 ```
-fake-news-detection/
-├── app.py                    # Main Flask application
+FactShield/
+├── app.py                    # Original Flask app with ML models (local)
+├── app_simple.py             # Lightweight version for Vercel deployment
+├── api/
+│   └── index.py             # Vercel serverless function handler
 ├── requirements.txt           # Python dependencies
 ├── templates/
 │   └── index.html           # Frontend UI with glassmorphism design
-├── models/                  # Trained ML models
+├── models/                  # Trained ML models (excluded from Vercel)
 │   ├── xgboost_model.pkl
 │   ├── random_forest_model.pkl
 │   ├── light_gbm_model.pkl
 │   ├── logistic_regression_model.pkl
 │   └── vectorizer.pkl
-└── README.md               # This file
+├── vercel.json             # Vercel configuration
+├── package.json            # Node.js configuration for Vercel
+├── .vercelignore          # Files excluded from deployment
+└── README.md              # This file
 ```
 
 ## 🎯 How It Works
@@ -103,6 +112,7 @@ fake-news-detection/
 - **Frontend**: HTML5, CSS3, JavaScript
 - **ML Frameworks**: scikit-learn, XGBoost, LightGBM
 - **AI Model**: RoBERTa (Hugging Face Transformers)
+- **Deployment**: Vercel Serverless Functions
 - **Visualization**: Chart.js
 - **Icons**: Font Awesome
 - **Styling**: CSS Variables, Glassmorphism
