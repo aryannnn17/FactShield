@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FactShield | Intelligent Fake News Detection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #8b5cf6;
+      --primary-light: #a78bfa;
+      --primary-dark: #7c3aed;
+      --secondary: #06b6d4;
+      --success: #10b981;
+      --danger: #f43f5e;
+      --warning: #f59e0b;
+      --bg-light: linear-gradient(135deg, #f5f3ff 0%, #e0e7ff 50%, #dbeafe 100%);
+      --bg-dark: linear-gradient(135deg, #0f0a1a 0%, #1a1033 50%, #0f172a 100%);
+      --card-light: rgba(255, 255, 255, 0.85);
+      --card-dark: rgba(30, 41, 59, 0.85);
+      --text-light: #1e293b;
+      --text-dark: #f8fafc;
+      --border-light: rgba(139, 92, 246, 0.2);
+      --border-dark: rgba(139, 92, 246, 0.3);
+      --shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+      --shadow-lg: 0 20px 60px rgba(139, 92, 246, 0.25);
+      --glass: blur(20px) saturate(180%);
+    }
+
+    html[data-theme='light'] {
+      --bg: var(--bg-light);
+      --card: var(--card-light);
+      --text: var(--text-light);
+      --border: var(--border-light);
+    }
+
+    html[data-theme='dark'] {
+      --bg: var(--bg-dark);
+      --card: var(--card-dark);
+      --text: var(--text-dark);
+      --border: var(--border-dark);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px;
+    }
+
+    /* Animated background orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      z-index: -1;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: var(--primary);
+      top: -100px;
+      left: -100px;
+    }
+
+    .orb-2 {
+      width: 300px;
+      height: 300px;
+      background: var(--secondary);
+      bottom: -50px;
+      right: -50px;
+      animation-delay: -10s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0 40px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-icon::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 100%);
+    }
+
+    .brand-icon i {
+      font-size: 1.75rem;
+      color: white;
+    }
+
+    .brand-text h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-text p {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      font-weight: 500;
+    }
+
+    .theme-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      border: 2px solid var(--border);
+      background: var(--card);
+      backdrop-filter: var(--glass);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: var(--text);
+    }
+
+    .theme-btn:hover {
+      transform: translateY(-2px) rotate(15deg);
+      box-shadow: var(--shadow);
+      border-color: var(--primary);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .orb { display: none; }
+    }
+
+    .glass-card {
+      background: var(--card);
+      backdrop-filter: var(--glass);
+      border-radius: 24px;
+      padding: 32px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+
+    .card-header i {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 320px;
+      padding: 20px;
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.5);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      line-height: 1.7;
+      resize: vertical;
+      transition: all 0.3s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    html[data-theme='dark'] textarea {
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    html[data-theme='dark'] textarea:focus {
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 20px;
+      float: right;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 100%);
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .loader {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading .loader { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .consensus-badge {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 24px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .consensus-badge::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.15;
+    }
+
+    .consensus-badge.fake {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.2) 0%, rgba(244, 63, 94, 0.05) 100%);
+      border: 2px solid rgba(244, 63, 94, 0.3);
+      color: var(--danger);
+    }
+
+    .consensus-badge.fake::before {
+      background: radial-gradient(circle at top right, var(--danger), transparent);
+    }
+
+    .consensus-badge.real {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 100%);
+      border: 2px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+
+    .consensus-badge.real::before {
+      background: radial-gradient(circle at top right, var(--success), transparent);
+    }
+
+    .consensus-badge i {
+      font-size: 2rem;
+    }
+
+    .model-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .model-card {
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+
+    .model-card:hover {
+      transform: translateX(5px);
+      background: rgba(255, 255, 255, 0.6);
+      border-color: var(--primary-light);
+    }
+
+    html[data-theme='dark'] .model-card {
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    html[data-theme='dark'] .model-card:hover {
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .model-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .model-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .model-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+
+    .model-icon.xgboost { background: rgba(139, 92, 246, 0.15); color: var(--primary); }
+    .model-icon.rf { background: rgba(6, 182, 212, 0.15); color: var(--secondary); }
+    .model-icon.lgb { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .model-icon.lr { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+
+    .model-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .model-pill.fake {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--danger);
+    }
+
+    .model-pill.real {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    .model-desc {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .confidence-track {
+      height: 8px;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    html[data-theme='dark'] .confidence-track {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .confidence-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .confidence-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .confidence-fill.fake { background: linear-gradient(90deg, var(--danger), #fb7185); }
+    .confidence-fill.real { background: linear-gradient(90deg, var(--success), #34d399); }
+
+    .confidence-value {
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    .chart-container {
+      margin-top: 28px;
+      height: 200px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    html[data-theme='dark'] .chart-container {
+      background: rgba(15, 23, 42, 0.3);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 40px;
+    }
+
+    .empty-illustration {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      opacity: 0.8;
+      box-shadow: var(--shadow);
+    }
+
+    .empty-illustration i {
+      font-size: 3rem;
+      color: white;
+    }
+
+    .empty-state h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      opacity: 0.6;
+      font-size: 0.95rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-left: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  
+  <div class="container">
+    <!-- Main Header Section -->
+    <header style="
+      position: relative;
+      padding: 30px 30px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    ">
+      <!-- Left side: Product Name -->
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="
+          width: 56px;
+          height: 56px;
+          background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, var(--secondary) 100%);
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+          position: relative;
+          animation: pulse 3s ease-in-out infinite;
+        ">
+          <i class="fas fa-shield-alt" style="
+            font-size: 1.5rem;
+            color: white;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+          "></i>
+          <!-- Shine effect -->
+          <div style="
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+            border-radius: 16px;
+          "></div>
+        </div>
+        <div>
+          <h1 style="
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 25%, var(--primary) 50%, var(--secondary) 75%, var(--primary) 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+            letter-spacing: -0.5px;
+            filter: drop-shadow(0 2px 8px rgba(139, 92, 246, 0.3));
+            line-height: 1.2;
+          ">FactShield</h1>
+          <p style="
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 4px 0 0 0;
+            color: var(--text);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+          ">
+            <span style="
+              display: inline-block;
+              padding: 4px 12px;
+              background: rgba(139, 92, 246, 0.15);
+              border: 1px solid rgba(139, 92, 246, 0.3);
+              border-radius: 20px;
+              font-size: 0.7rem;
+              box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+            ">Intelligent Fake News Detection</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Right side: Theme toggle -->
+      <button class="theme-btn" id="theme-toggle" style="
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        border: 2px solid var(--border);
+        background: var(--card);
+        backdrop-filter: blur(20px);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: var(--text);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      " onmouseover="this.style.transform='scale(1.1) rotate(15deg)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 25px rgba(139, 92, 246, 0.4)'" 
+         onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.borderColor='var(--border)'; this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'">
+        <i class="fas fa-moon" id="theme-icon" style="font-size: 1.1rem;"></i>
+      </button>
+
+      <!-- Animated background glow -->
+      <div style="
+        position: absolute;
+        top: -50px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 600px;
+        height: 200px;
+        background: radial-gradient(ellipse, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+        filter: blur(40px);
+        pointer-events: none;
+        z-index: -1;
+      "></div>
+
+      <!-- Keyframe animations -->
+      <style>
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% center; }
+          100% { background-position: -200% center; }
+        }
+      </style>
+    </header>
+
+    <!-- Two Card Layout -->
+    <div style="
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      align-items: stretch;
+    ">
+      <!-- Card 1: Input -->
+      <div class="glass-card" style="display: flex; flex-direction: column;">
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 2px solid var(--border);
+        ">
+          <div style="
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+          "><i class="fas fa-pen"></i></div>
+          <div>
+            <div style="font-weight: 700; font-size: 1.2rem;">Article Input</div>
+            <div style="font-size: 0.85rem; opacity: 0.7;">Paste news content to analyze</div>
+          </div>
+        </div>
+        <div class="input-wrapper" style="flex: 1; display: flex; flex-direction: column;">
+          <form id="analysis-form" action="{{ url_for('predict') }}" method="post" style="flex: 1; display: flex; flex-direction: column;">
+            <textarea id="article-input" name="article" placeholder="Paste a news article here to analyze its authenticity using our ensemble of machine learning models..." required style="flex: 1;">{{ article }}</textarea>
+            <button type="submit" class="btn" style="margin-top: 20px; align-self: flex-end;">
+              <span>Analyze Article</span>
+              <div class="loader"></div>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Card 2: Results -->
+      <div class="glass-card" style="display: flex; flex-direction: column;">
+        {% if results %}
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 2px solid var(--border);
+        ">
+          <div style="
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+          "><i class="fas fa-chart-pie"></i></div>
+          <div style="flex: 1;">
+            <div style="font-weight: 700; font-size: 1.2rem;">Analysis Results</div>
+            <div style="font-size: 0.85rem; opacity: 0.7;">Multi-model consensus</div>
+          </div>
+          <span style="
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+              color: white;
+              padding: 6px 14px;
+              border-radius: 20px;
+              font-size: 0.8rem;
+              font-weight: 700;
+            "><i class="fas fa-cube" style="font-size: 0.7rem;"></i> 5 Models</span>
+        </div>
+        
+        <div class="consensus-badge {{ 'fake' if consensus == 'FAKE' else 'real' }}" style="margin-bottom: 20px;">
+          <i class="fas {{ 'fa-exclamation-circle' if consensus == 'FAKE' else 'fa-check-circle' }}"></i>
+          <span>Consensus: {{ consensus }}</span>
+        </div>
+
+        <div class="model-list" style="flex: 1; overflow-y: auto;">
+          {% for model, info in results.items() %}
+          <div class="model-card">
+            <div class="model-header">
+              <div class="model-title">
+                <div class="model-icon {{ model.lower().replace(' ', '')[:3] if model != 'Random Forest' else 'rf' if model == 'Random Forest' else 'xgboost' if model == 'XGBoost' else 'lgb' if model == 'LightGBM' else 'lr' }}">
+                  <i class="fas {{ 'fa-bolt' if model == 'XGBoost' else 'fa-tree' if model == 'Random Forest' else 'fa-leaf' if model == 'LightGBM' else 'fa-chart-line' }}"></i>
+                </div>
+                {{ model }}
+              </div>
+              <span class="model-pill {{ 'fake' if info.label == 'FAKE' else 'real' }}">
+                {{ info.label }} {{ "%.0f"|format(info.confidence) }}%
+              </span>
+            </div>
+            <div class="model-desc">{{ descriptions[model] }}</div>
+            <div class="confidence-track">
+              <div class="confidence-fill {{ 'fake' if info.label == 'FAKE' else 'real' }}" style="width: {{ info.confidence }}%"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="chart-container" style="margin-top: 20px; height: 180px;">
+          <canvas id="confidenceChart"></canvas>
+        </div>
+        {% else %}
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 2px solid var(--border);
+        ">
+          <div style="
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--secondary) 0%, #0891b2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+          "><i class="fas fa-chart-pie"></i></div>
+          <div>
+            <div style="font-weight: 700; font-size: 1.2rem;">Analysis Results</div>
+            <div style="font-size: 0.85rem; opacity: 0.7;">Waiting for input...</div>
+          </div>
+        </div>
+        <div style="
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 40px;
+        ">
+          <div style="
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            opacity: 0.8;
+          ">
+            <i class="fas fa-search" style="font-size: 2.5rem; color: white;"></i>
+          </div>
+          <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 8px;">Ready to Analyze</h3>
+          <p style="opacity: 0.6; font-size: 0.95rem; max-width: 280px;">Enter a news article and let FactShield's ensemble of ML models verify its authenticity</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      themeIcon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+      if (window.confidenceChart) updateChart();
+    });
+
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.className = 'fas fa-sun';
+    }
+
+    // Loading animation
+    document.getElementById('analysis-form').addEventListener('submit', function() {
+      document.querySelector('.btn').classList.add('loading');
+    });
+
+    {% if results %}
+    // Chart
+    const ctx = document.getElementById('confidenceChart').getContext('2d');
+    const labels = [{% for model in results.keys() %}'{{ model }}'{% if not loop.last %},{% endif %}{% endfor %}];
+    const data = [{% for info in results.values() %}{{ "%.1f"|format(info.confidence) }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const predictions = [{% for info in results.values() %}'{{ info.label }}'{% if not loop.last %},{% endif %}{% endfor %}];
+
+    const getColors = () => predictions.map(p => p === 'FAKE' ? '#f43f5e' : '#10b981');
+
+    window.confidenceChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Confidence %',
+          data: data,
+          backgroundColor: getColors(),
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            padding: 12,
+            cornerRadius: 8,
+            callbacks: {
+              label: (ctx) => `Confidence: ${ctx.raw}%`,
+              afterLabel: (ctx) => `Prediction: ${predictions[ctx.dataIndex]}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { font: { family: 'Plus Jakarta Sans' } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Plus Jakarta Sans', weight: '600' } }
+          }
+        },
+        animation: {
+          duration: 1000,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+
+    function updateChart() {
+      window.confidenceChart.data.datasets[0].backgroundColor = getColors();
+      window.confidenceChart.update('none');
+    }
+    {% endif %}
+  </script>
+
+  <footer style="
+    text-align: center;
+    padding: 40px 30px;
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+    backdrop-filter: blur(20px);
+  ">
+    <div style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    ">
+      <p style="
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text);
+        opacity: 0.9;
+      ">
+        Made with <span style="color: #f43f5e;">❤️</span> by <strong>Aryan</strong>
+      </p>
+      
+      <a href="https://github.com/aryannnn17" 
+         target="_blank" 
+         style="
+           display: inline-flex;
+           align-items: center;
+           gap: 8px;
+           padding: 10px 20px;
+           background: linear-gradient(135deg, #333 0%, #24292e 100%);
+           color: white;
+           text-decoration: none;
+           border-radius: 10px;
+           font-weight: 600;
+           transition: all 0.3s ease;
+         "
+         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.3)'"
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+        <i class="fab fa-github"></i>
+        @aryannnn17
+      </a>
+      
+      <p style="
+        font-size: 0.85rem;
+        opacity: 0.6;
+        margin-top: 8px;
+      ">
+        © 2025 FactShield. All rights reserved.
+      </p>
+    </div>
+  </footer>
+</body>
+</html>
