@@ -17,11 +17,25 @@ A modern web application that uses multiple machine learning models to detect fa
 
 ## 🤖 ML Models Used
 
-1. **RoBERTa** - Advanced transformer model (2x voting weight)
-2. **XGBoost** - Optimized gradient boosting
-3. **Random Forest** - Ensemble decision trees
-4. **LightGBM** - Fast gradient boosting framework
-5. **Logistic Regression** - Linear classification model
+1. **🤖 RoBERTa** - Advanced transformer model with superior contextual understanding (2x voting weight)
+2. **⚡ XGBoost** - Optimized gradient boosting for high-performance classification
+3. **🌲 Random Forest** - Ensemble decision trees for robust pattern detection
+4. **💡 LightGBM** - Fast gradient boosting framework with excellent speed
+5. **📊 Logistic Regression** - Linear classification model for baseline comparison
+
+## 📋 Repository Description
+
+**FactShield** is an advanced fake news detection system that leverages the power of ensemble machine learning combined with cutting-edge transformer technology. Our system analyzes news articles using 5 different models, with RoBERTa (a state-of-the-art transformer) given double voting weight due to its superior accuracy.
+
+### 🎯 Key Highlights:
+- **🔬 Multi-Model Approach**: Combines traditional ML (XGBoost, Random Forest, LightGBM, Logistic Regression) with advanced AI (RoBERTa)
+- **⚖️ Weighted Consensus**: Smart voting system where RoBERTa's predictions count twice, ensuring higher accuracy
+- **🎨 Professional UI**: Modern glassmorphism design with dark/light theme toggle and responsive layout
+- **📊 Visual Analytics**: Interactive charts showing confidence scores for each model
+- **🚀 Production Ready**: Optimized for deployment with environment variable support
+
+### 💡 Innovation:
+Our weighted consensus mechanism ensures that while we benefit from diverse model perspectives, the most accurate model (RoBERTa) has proportionally more influence on the final decision, resulting in superior overall accuracy compared to single-model approaches.
 
 ## 🚀 Quick Start
 
