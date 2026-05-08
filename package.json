@@ -1,0 +1,18 @@
+{
+  "name": "factshield",
+  "version": "1.0.0",
+  "description": "Fake news detection web application",
+  "main": "api/index.py",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

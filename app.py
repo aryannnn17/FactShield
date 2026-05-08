@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request
 import re
 import nltk
 from nltk.corpus import stopwords
@@ -13,13 +13,20 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 
 # Production deployment configuration
-import os
 port = int(os.environ.get('PORT', 5000))
 host = os.environ.get('HOST', '0.0.0.0')
 
-# Download NLTK resources
-nltk.download('punkt')
-nltk.download('stopwords')
+# Download NLTK resources (only if not already downloaded)
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords')
+
 stop_words = set(stopwords.words('english'))
 portStemmer = PorterStemmer()
 
