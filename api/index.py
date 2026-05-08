@@ -4,8 +4,8 @@ import sys
 # Add the root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-# Import the Flask app (use lightweight version for Vercel)
-from app_vercel import app
+# Import the Flask app (use simple version for Vercel)
+from app_simple import app
 
 # Vercel serverless function handler
 def handler(environ, start_response):

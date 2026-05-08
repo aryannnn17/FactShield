@@ -1,8 +1,5 @@
 from flask import Flask, render_template, request
 import re
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
 import os
 
 # Create an app object using the flask class
@@ -13,31 +10,14 @@ app.config['UPLOAD_FOLDER'] = 'uploads/'
 port = int(os.environ.get('PORT', 5000))
 host = os.environ.get('HOST', '0.0.0.0')
 
-# Download NLTK resources with error handling for serverless environment
-try:
-    # Try to download NLTK data to /tmp (writable in serverless)
-    nltk.data.path.append('/tmp/nltk_data')
-    
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        nltk.download('punkt', download_dir='/tmp/nltk_data')
-    
-    try:
-        nltk.data.find('corpora/stopwords')
-    except LookupError:
-        nltk.download('stopwords', download_dir='/tmp/nltk_data')
-    
-    stop_words = set(stopwords.words('english'))
-    portStemmer = PorterStemmer()
-    nltk_ready = True
-    
-except Exception as e:
-    print(f"NLTK initialization failed: {e}")
-    # Fallback without NLTK
-    stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'])
-    portStemmer = None
-    nltk_ready = False
+# Simple stopwords list (no NLTK dependency)
+STOP_WORDS = {
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 
+    'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 
+    'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 
+    'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you',
+    'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them'
+}
 
 # Lightweight text analysis functions
 def clean(text):
@@ -47,23 +27,20 @@ def clean(text):
 
 def preprocess(text):
     text = clean(text)
-    if nltk_ready and portStemmer:
-        tokens = [portStemmer.stem(word)
-                  for word in text.split() if word not in stop_words]
-    else:
-        # Fallback without stemming
-        tokens = [word for word in text.split() if word not in stop_words]
+    tokens = [word for word in text.split() if word not in STOP_WORDS]
     return ' '.join(tokens)
 
 def simple_sentiment_analysis(text):
     """Simple rule-based analysis for demonstration"""
     fake_indicators = [
         'shocking', 'unbelievable', 'secret', 'revealed', 'conspiracy',
-        'hoax', 'fake', 'false', 'lie', 'misleading', 'debunked'
+        'hoax', 'fake', 'false', 'lie', 'misleading', 'debunked', 'scam',
+        'bizarre', 'incredible', 'amazing', 'miracle', 'breakthrough'
     ]
     real_indicators = [
         'study', 'research', 'according', 'official', 'confirmed',
-        'verified', 'evidence', 'data', 'report', 'analysis'
+        'verified', 'evidence', 'data', 'report', 'analysis', 'scientist',
+        'expert', 'doctor', 'professor', 'university', 'journal', 'published'
     ]
     
     text_lower = text.lower()
@@ -80,13 +57,12 @@ def simple_sentiment_analysis(text):
 def analyze_text_features(text):
     """Analyze text features for fake news detection"""
     words = text.split()
-    sentences = text.split('.')
+    sentences = [s.strip() for s in text.split('.') if s.strip()]
     
     # Feature extraction
     avg_word_length = sum(len(word) for word in words) / len(words) if words else 0
     avg_sentence_length = sum(len(sent.split()) for sent in sentences) / len(sentences) if sentences else 0
     exclamation_count = text.count('!')
-    question_count = text.count('?')
     all_caps_count = sum(1 for word in words if word.isupper() and len(word) > 1)
     
     # Simple scoring based on features
@@ -104,6 +80,23 @@ def analyze_text_features(text):
     label = "FAKE" if fake_score > 20 else "REAL"
     
     return label, confidence
+
+def analyze_credibility_indicators(text):
+    """Check for credibility indicators"""
+    credibility_indicators = [
+        'source said', 'according to', 'reported', 'stated', 'announced',
+        'claimed', 'alleged', 'sources say', 'experts say', 'officials say'
+    ]
+    
+    text_lower = text.lower()
+    credibility_count = sum(1 for indicator in credibility_indicators if indicator in text_lower)
+    
+    if credibility_count >= 3:
+        return "REAL", min(75, 40 + credibility_count * 10)
+    elif credibility_count >= 1:
+        return "UNCERTAIN", 55
+    else:
+        return "FAKE", 45
 
 @app.route('/')
 def home():
@@ -123,19 +116,26 @@ def predict():
     
     # Method 1: Rule-based sentiment analysis
     sentiment_label, sentiment_confidence = simple_sentiment_analysis(article)
-    results["Rule-Based Analysis"] = {
+    results["Keyword Analysis"] = {
         "label": sentiment_label,
         "confidence": sentiment_confidence
     }
     
     # Method 2: Text feature analysis
     feature_label, feature_confidence = analyze_text_features(article)
-    results["Text Feature Analysis"] = {
+    results["Style Analysis"] = {
         "label": feature_label,
         "confidence": feature_confidence
     }
     
-    # Method 3: Length-based analysis
+    # Method 3: Credibility indicators
+    credibility_label, credibility_confidence = analyze_credibility_indicators(article)
+    results["Credibility Check"] = {
+        "label": credibility_label,
+        "confidence": credibility_confidence
+    }
+    
+    # Method 4: Length-based analysis
     word_count = len(article.split())
     if word_count < 100:
         length_label = "UNCERTAIN"
@@ -160,7 +160,6 @@ def predict():
     votes = [info['label'] for info in results.values()]
     fake_votes = votes.count("FAKE")
     real_votes = votes.count("REAL")
-    uncertain_votes = votes.count("UNCERTAIN")
     
     if fake_votes > real_votes:
         consensus = "FAKE"
@@ -171,9 +170,10 @@ def predict():
     
     # Descriptions for each method
     descriptions = {
-        "Rule-Based Analysis": "Uses keyword matching to identify fake news indicators",
-        "Text Feature Analysis": "Analyzes writing style and text patterns",
-        "Length Analysis": "Evaluates article length and complexity"
+        "Keyword Analysis": "Analyzes for fake news indicators and credible sources",
+        "Style Analysis": "Evaluates writing style and emotional language patterns",
+        "Credibility Check": "Looks for source attribution and reporting indicators",
+        "Length Analysis": "Assesses article length and complexity"
     }
     
     return render_template('index.html',
